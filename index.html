@@ -1,0 +1,564 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마법사 숫자야구</title>
+
+<style>
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+    background: transparent !important;
+    font-family: "Noto Sans KR", "Malgun Gothic", sans-serif;
+    color: white;
+}
+
+.game {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: transparent;
+}
+
+.magic-ui {
+    width: 670px;
+    min-height: 600px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 230px;
+    gap: 15px;
+    padding: 20px;
+    background: transparent;
+}
+
+.panel {
+    padding: 15px;
+    background: transparent;
+    border: none;
+}
+
+.panel-title {
+    text-align: center;
+    color: #e6c7ff;
+    font-size: 17px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    text-shadow: 0 0 8px rgba(210,150,255,.8);
+}
+
+.center {
+    position: relative;
+    padding-top: 65px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+}
+
+.magic-circle {
+    position: relative;
+    width: 210px;
+    height: 210px;
+    flex: 0 0 210px;
+    margin-bottom: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    isolation: isolate;
+    background:
+        radial-gradient(circle, rgba(120,47,200,.18) 0 16%, transparent 17% 29%, rgba(182,120,255,.12) 30% 31%, transparent 32%),
+        repeating-conic-gradient(from 0deg, rgba(225,190,255,.8) 0deg 1deg, transparent 1deg 12deg),
+        radial-gradient(circle, transparent 0 54%, rgba(181,125,255,.3) 55% 56%, transparent 57%);
+    border: 2px solid rgba(235,202,255,.95);
+    box-shadow:
+        0 0 12px #d8a4ff,
+        0 0 30px rgba(154,67,255,.75),
+        inset 0 0 28px rgba(140,70,255,.35);
+    animation: magicGlow 2.4s ease-in-out infinite alternate;
+}
+
+.magic-circle::before {
+    content: "";
+    position: absolute;
+    inset: 15px;
+    border-radius: 50%;
+    border: 2px solid rgba(236,203,255,.95);
+    outline: 1px dashed rgba(190,135,255,.85);
+    outline-offset: 5px;
+    background: conic-gradient(
+        from 20deg,
+        transparent 0 8%,
+        rgba(235,190,255,.95) 8.5% 9%,
+        transparent 9.5% 24%,
+        rgba(235,190,255,.95) 24.5% 25%,
+        transparent 25.5% 49%,
+        rgba(235,190,255,.95) 49.5% 50%,
+        transparent 50.5% 74%,
+        rgba(235,190,255,.95) 74.5% 75%,
+        transparent 75.5%
+    );
+    -webkit-mask: radial-gradient(circle, transparent 0 57%, #000 58% 60%, transparent 61%);
+    mask: radial-gradient(circle, transparent 0 57%, #000 58% 60%, transparent 61%);
+    animation: runeRotate 24s linear infinite;
+    z-index: -1;
+}
+
+.magic-circle::after {
+    content: "✧ ᚱ ✦ ᛟ ✧ ᚷ ✦ ᛉ ✧";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 23px;
+    letter-spacing: 2px;
+    color: #e9d5ff;
+    text-shadow: 0 0 10px #c084fc;
+    pointer-events: none;
+}
+
+.seal-message {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 12px);
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 90vw;
+    color: #fff2b8;
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1.5;
+    text-align: center;
+    text-shadow: 0 0 6px #fff, 0 0 13px #e5adff, 0 0 24px #9a43ff;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.seal-message.show {
+    animation: sealMessageIn .55s ease-out forwards;
+}
+
+@keyframes sealMessageIn {
+    from { opacity: 0; transform: translate(-50%,12px) scale(.85); }
+    to { opacity: 1; transform: translate(-50%,0) scale(1); }
+}
+
+@keyframes runeRotate {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes magicGlow {
+    from {
+        filter: brightness(.85);
+        box-shadow: 0 0 12px #a855f7, 0 0 25px rgba(168,85,247,.5);
+    }
+    to {
+        filter: brightness(1.3);
+        box-shadow: 0 0 20px #c084fc, 0 0 45px rgba(168,85,247,.9);
+    }
+}
+
+.input-area {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 9px;
+}
+
+.input-box {
+    width: 43px;
+    height: 43px;
+    border-radius: 9px;
+    border: 1px solid rgba(210,170,255,.7);
+    background: rgba(10,5,25,.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 900;
+    color: white;
+}
+
+.input-box.active {
+    border-color: #d49cff;
+    box-shadow: 0 0 12px rgba(190,100,255,.8);
+}
+
+.keypad {
+    width: 210px;
+    display: grid;
+    grid-template-columns: repeat(5,1fr);
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.num-btn {
+    height: 36px;
+    border: 1px solid rgba(190,140,255,.55);
+    border-radius: 8px;
+    background: rgba(80,40,130,.45);
+    color: #eee;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: .15s;
+}
+
+.num-btn:hover {
+    transform: translateY(-2px);
+    background: rgba(140,80,210,.65);
+    box-shadow: 0 0 10px rgba(180,100,255,.6);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 9px;
+}
+
+.action-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 9px 12px;
+    color: white;
+    font-weight: 800;
+    cursor: pointer;
+    transition: .15s;
+}
+
+.check {
+    background: linear-gradient(135deg,#7441c7,#b06cff);
+    box-shadow: 0 0 12px rgba(170,90,255,.45);
+}
+
+.reset {
+    background: rgba(80,70,110,.7);
+    border: 1px solid rgba(190,170,220,.4);
+}
+
+.reveal-answer {
+    width: 210px;
+    margin-top: 7px;
+    background: rgba(40,25,60,.9);
+    border: 1px solid #a879d8;
+}
+
+.action-btn:hover { transform: translateY(-2px); }
+
+.result {
+    min-height: 22px;
+    margin-top: 7px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #dfc0ff;
+    text-shadow: 0 0 8px rgba(190,120,255,.7);
+    text-align: center;
+}
+
+.history {
+    max-height: 430px;
+    overflow-y: auto;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 5px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid rgba(190,150,240,.2);
+    font-size: 12px;
+}
+
+.guess { color: white; font-weight: 800; letter-spacing: 2px; }
+.strike { color: #d78cff; font-weight: 900; }
+.ball { color: #7edcff; font-weight: 900; }
+
+.particle {
+    position: absolute;
+    font-size: 18px;
+    color: #e7c7ff;
+    pointer-events: none;
+    animation: floatUp 1.5s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-110px) scale(1.7); }
+}
+
+@media (max-width: 700px) {
+    .magic-ui {
+        transform: scale(.8);
+        transform-origin: center;
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="game">
+    <div class="magic-ui" id="gameUI">
+        <div class="center">
+            <div class="magic-circle" id="magicCircle">
+                <div class="seal-message" id="sealMessage" aria-live="polite"></div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-box" id="box0"></div>
+                <div class="input-box" id="box1"></div>
+                <div class="input-box" id="box2"></div>
+                <div class="input-box" id="box3"></div>
+            </div>
+
+            <div class="keypad">
+                <button class="num-btn" onclick="inputNumber('1')">1</button>
+                <button class="num-btn" onclick="inputNumber('2')">2</button>
+                <button class="num-btn" onclick="inputNumber('3')">3</button>
+                <button class="num-btn" onclick="inputNumber('4')">4</button>
+                <button class="num-btn" onclick="inputNumber('5')">5</button>
+                <button class="num-btn" onclick="inputNumber('6')">6</button>
+                <button class="num-btn" onclick="inputNumber('7')">7</button>
+                <button class="num-btn" onclick="inputNumber('8')">8</button>
+                <button class="num-btn" onclick="inputNumber('9')">9</button>
+                <button class="num-btn" onclick="inputNumber('0')">0</button>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn reset" onclick="deleteNumber()">← 지우기</button>
+                <button class="action-btn check" onclick="checkAnswer()">✦ 주문 해독</button>
+                <button class="action-btn reset" onclick="newGame()">🎲 리롤</button>
+            </div>
+
+            <button class="action-btn reveal-answer" onclick="revealAnswer()">👁 정답 보기</button>
+            <div class="result" id="result">숫자를 입력하세요.</div>
+        </div>
+
+        <div class="panel right-panel">
+            <div class="panel-title">📜 주문 해독 기록</div>
+            <div class="history" id="history"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let answer = "";
+let currentInput = "";
+let gameOver = false;
+
+/* ===== 효과음: 브라우저 내부에서 생성 ===== */
+let audioContext = null;
+
+function initAudio() {
+    if (!audioContext) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) audioContext = new AudioCtx();
+    }
+    if (audioContext && audioContext.state === "suspended") {
+        audioContext.resume();
+    }
+}
+
+function tone(freq, duration, type = "sine", volume = 0.08, delay = 0) {
+    initAudio();
+    if (!audioContext) return;
+
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const start = audioContext.currentTime + delay;
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.001, start);
+    gain.gain.exponentialRampToValueAtTime(volume, start + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start(start);
+    osc.stop(start + duration + 0.03);
+}
+
+function playNumberSound() {
+    tone(660, 0.09, "sine", 0.045);
+}
+
+function playDecodeSound() {
+    tone(440, 0.12, "triangle", 0.07);
+    tone(660, 0.16, "triangle", 0.06, 0.10);
+}
+
+function playFailSound() {
+    tone(240, 0.20, "sawtooth", 0.055);
+    tone(180, 0.28, "triangle", 0.05, 0.16);
+}
+
+function playSuccessSound() {
+    tone(523, 0.22, "sine", 0.07);
+    tone(659, 0.22, "sine", 0.07, 0.17);
+    tone(784, 0.25, "sine", 0.07, 0.34);
+    tone(1047, 0.55, "triangle", 0.08, 0.53);
+}
+
+function generateAnswer() {
+    const numbers = ["0","1","2","3","4","5","6","7","8","9"];
+
+    for (let i = numbers.length - 1; i > 0; i--) {
+        const randomValue = window.crypto && window.crypto.getRandomValues
+            ? window.crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296
+            : Math.random();
+        const j = Math.floor(randomValue * (i + 1));
+        [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+    }
+
+    answer = numbers.slice(0,4).join("");
+}
+
+function inputNumber(number) {
+    initAudio();
+
+    if (gameOver || currentInput.length >= 4) return;
+
+    if (currentInput.includes(number)) {
+        setResult("이미 사용한 숫자입니다.");
+        return;
+    }
+
+    playNumberSound();
+    currentInput += number;
+    updateInputBoxes();
+}
+
+function updateInputBoxes() {
+    for (let i = 0; i < 4; i++) {
+        const box = document.getElementById("box" + i);
+        box.textContent = currentInput[i] || "";
+        box.classList.toggle("active", i === currentInput.length);
+    }
+}
+
+function deleteNumber() {
+    if (gameOver) return;
+    currentInput = currentInput.slice(0,-1);
+    updateInputBoxes();
+}
+
+function checkAnswer() {
+    initAudio();
+    playDecodeSound();
+
+    if (gameOver) return;
+
+    if (currentInput.length !== 4) {
+        setResult("✦ 4자리 주문을 완성하세요.");
+        return;
+    }
+
+    let strike = 0;
+    let ball = 0;
+
+    for (let i = 0; i < 4; i++) {
+        if (currentInput[i] === answer[i]) strike++;
+        else if (answer.includes(currentInput[i])) ball++;
+    }
+
+    addHistory(currentInput, strike, ball);
+
+    if (strike === 4) {
+        winGame();
+        return;
+    }
+
+    playFailSound();
+    setResult(`✨ ${strike} STRIKE · ${ball} BALL`);
+    currentInput = "";
+    updateInputBoxes();
+}
+
+function addHistory(number, strike, ball) {
+    const history = document.getElementById("history");
+    const item = document.createElement("div");
+    item.className = "history-item";
+    item.innerHTML = `
+        <span class="guess">${number}</span>
+        <span><span class="strike">${strike}S</span> &nbsp; <span class="ball">${ball}B</span></span>
+    `;
+    history.prepend(item);
+}
+
+function winGame() {
+    gameOver = true;
+    playSuccessSound();
+    setResult("✨ 주문 해독 성공!");
+
+    const sealMessage = document.getElementById("sealMessage");
+    sealMessage.classList.remove("show");
+    sealMessage.textContent = "";
+
+    createParticles();
+
+    setTimeout(() => {
+        const randomNumber = Math.floor(Math.random() * 6) + 1;
+        sealMessage.innerHTML = `🌟 봉인 해제 🌟<br>${randomNumber}`;
+        sealMessage.classList.add("show");
+    }, 1900);
+}
+
+function revealAnswer() {
+    setResult(`🔑 정답은 ${answer} 입니다.`);
+}
+
+function newGame() {
+    generateAnswer();
+    currentInput = "";
+    gameOver = false;
+
+    const sealMessage = document.getElementById("sealMessage");
+    sealMessage.classList.remove("show");
+    sealMessage.textContent = "";
+
+    document.getElementById("history").innerHTML = "";
+    setResult("새로운 봉인이 생성되었습니다.");
+    updateInputBoxes();
+}
+
+function setResult(text) {
+    document.getElementById("result").textContent = text;
+}
+
+function createParticles() {
+    const container = document.getElementById("magicCircle");
+    const symbols = ["✦","✧","✶","✹","⋆","✨","🌟"];
+
+    for (let i = 0; i < 28; i++) {
+        const particle = document.createElement("div");
+        particle.className = "particle";
+        particle.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        particle.style.left = (8 + Math.random() * 84) + "%";
+        particle.style.top = (35 + Math.random() * 60) + "%";
+        particle.style.animationDelay = (Math.random() * .45) + "s";
+        container.appendChild(particle);
+        setTimeout(() => particle.remove(), 2200);
+    }
+}
+
+document.addEventListener("keydown", function(event) {
+    if (event.key >= "0" && event.key <= "9") inputNumber(event.key);
+    if (event.key === "Backspace") deleteNumber();
+    if (event.key === "Enter") checkAnswer();
+});
+
+generateAnswer();
+updateInputBoxes();
+</script>
+</body>
+</html>
